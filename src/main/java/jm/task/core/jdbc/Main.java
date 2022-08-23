@@ -22,7 +22,7 @@ public class Main {
 
         System.out.println(userList);
 
-        userService.removeUserById(3);
+        userService.removeUserById(2);
 
         List<User> userList2 = userService.getAllUsers();
 
