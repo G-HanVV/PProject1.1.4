@@ -1,17 +1,17 @@
 package jm.task.core.jdbc.service;
 
 import jm.task.core.jdbc.dao.UserDao;
+import jm.task.core.jdbc.dao.UserDaoHibernateImpl;
 import jm.task.core.jdbc.dao.UserDaoJDBCImpl;
 import jm.task.core.jdbc.model.User;
 
 import java.util.List;
 
 public class UserServiceImpl implements UserService {
-    private final UserDao userDao;      // я правильно понимаю, что это все, что нужно было сделать?
-                                        // изменить тип поля на интерфейс
+    private final UserDao userDao;
 
     public UserServiceImpl(){
-        userDao = new UserDaoJDBCImpl();
+        userDao = new UserDaoHibernateImpl();
     }
     public void createUsersTable(){
         userDao.createUsersTable();
@@ -21,8 +21,12 @@ public class UserServiceImpl implements UserService {
         userDao.dropUsersTable();
     }
 
-    public void saveUser(String name, String lastName, byte age){
+    public void saveUser(String name, String lastName, byte age) {
         userDao.saveUser(name, lastName, age);
+    }
+
+    public void saveUser(User user){
+        userDao.saveUser(user.getName(), user.getLastName(), user.getAge());
     }
 
     public void removeUserById(long id){
