@@ -19,7 +19,6 @@ public class UserDaoHibernateImpl implements UserDao {
     public void dropUsersTable() {
 
     }
-
     @Override
     public void saveUser(String name, String lastName, byte age) {
 

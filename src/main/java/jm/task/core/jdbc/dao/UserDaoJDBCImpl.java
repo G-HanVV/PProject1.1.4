@@ -34,7 +34,6 @@ public class UserDaoJDBCImpl implements UserDao {
             System.out.println(e.getMessage());
         }
     }
-
     public void dropUsersTable() {
         try (Connection connection = Util.getConnection(); Statement statement = connection.createStatement()) {
             DatabaseMetaData metaData = connection.getMetaData();
