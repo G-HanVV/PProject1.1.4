@@ -1,9 +1,12 @@
 package jm.task.core.jdbc.dao;
 
+import jm.task.core.jdbc.ReportCollector;
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
 import org.hibernate.Session;
+import org.hibernate.exception.SQLGrammarException;
 
+import javax.persistence.PersistenceException;
 import java.sql.*;
 import java.util.List;
 
@@ -14,14 +17,11 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void createUsersTable() {
-        try (Connection connection = Util.getConnection()) {
-            DatabaseMetaData metaData = connection.getMetaData();
-            ResultSet tables = metaData.getTables("PP_1_1_3-4_JDBC_Hibernate", null, "USERS",
-                    new String[]{"TABLE"});
-            if (!tables.first()) {
-                System.out.println("\nCreate new table");
-                Session session = Util.getSession();
-                session.beginTransaction();
+        try (Session session = Util.getSession()) {
+            session.beginTransaction();
+            int r = Integer.parseInt(session.createSQLQuery("SELECT COUNT(*) FROM information_schema.TABLES WHERE" +
+                    "  TABLE_NAME =\"USERS\"").getSingleResult().toString());
+            if (r == 1) {
                 session.createSQLQuery("create table Users (" +
                                 "id bigint not null auto_increment, " +
                                 "age tinyint, " +
@@ -29,60 +29,88 @@ public class UserDaoHibernateImpl implements UserDao {
                                 "name varchar(255), " +
                                 "primary key (id))")
                         .executeUpdate();
-                session.getTransaction().commit();
-                Util.closeSession();
+                ReportCollector.toReport("Table created");
             } else {
-                System.out.println("\nTable already exists");
+                ReportCollector.toReport("Table already exists");
             }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
+        } catch (PersistenceException e) {
+            System.out.println(" --- " + e + " --- ");
+            ReportCollector.toReport(e.toString());
         }
     }
 
     @Override
     public void dropUsersTable() {
-        Session session = Util.getSession();
-        session.beginTransaction();
-        session.createSQLQuery("drop table if exists Users").executeUpdate();
-        session.getTransaction().commit();
-        Util.closeSession();
+        try (Session session = Util.getSession()) {
+            session.beginTransaction();
+            session.createSQLQuery("drop table if exists Users").executeUpdate();
+            ReportCollector.toReport("Table Users dropped");
+        } catch (PersistenceException e) {
+            System.out.println(" --- " + e + " --- ");
+            ReportCollector.toReport(e.toString());
+        }
     }
+
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        User user = new User(name, lastName, age);
         Session session = Util.getSession();
-        session.beginTransaction();
-        session.save(user);
-        session.getTransaction().commit();
-        Util.closeSession();
+        try {
+            User user = new User(name, lastName, age);
+            session.beginTransaction();
+            session.save(user);
+            session.getTransaction().commit();
+            System.out.println("Пользователь " + name + " добавлен в таблицу");
+            ReportCollector.toReport("Пользователь " + name + " добавлен в таблицу");
+        } catch (PersistenceException e) {
+            session.getTransaction().rollback();
+            System.out.println(" --- " + e + " --- ");
+            ReportCollector.toReport(e.toString());
+        }
     }
 
     @Override
     public void removeUserById(long id) {
         Session session = Util.getSession();
-        session.beginTransaction();
-        User user = session.get(User.class, id);
-        session.delete(user);
-        session.getTransaction().commit();
-        Util.closeSession();
+        try {
+            session.beginTransaction();
+            User user = session.get(User.class, id);
+            if (user != null) {
+                session.delete(user);
+                ReportCollector.toReport("User deleted from table by id = " + id);
+            } else {
+                ReportCollector.toReport("No user with this id = " + id);
+            }
+            session.getTransaction().commit();
+        } catch (PersistenceException e) {
+            session.getTransaction().rollback();
+            System.out.println(" --- " + e + " --- ");
+            ReportCollector.toReport(e.toString());
+        }
     }
 
     @Override
     public List<User> getAllUsers() {
-        Session session = Util.getSession();
-        session.beginTransaction();
-        List<User> userList = session.createQuery("From User").list();
-        session.getTransaction().commit();
-        Util.closeSession();
-        return userList;
+        try (Session session = Util.getSession()) {
+            session.beginTransaction();
+            List<User> userList = session.createQuery("From User").list();
+            return userList;
+        } catch (PersistenceException e) {
+            System.out.println(" --- " + e + " --- ");
+            ReportCollector.toReport(e.toString());
+            return null;
+        }
     }
 
     @Override
     public void cleanUsersTable() {
-        Session session = Util.getSession();
-        session.beginTransaction();
-        session.createQuery("DELETE FROM User").executeUpdate();
-        session.getTransaction().commit();
-        Util.closeSession();
+        try (Session session = Util.getSession()) {
+            session.beginTransaction();
+            session.createQuery("DELETE FROM User").executeUpdate();
+            session.getTransaction().commit();
+            ReportCollector.toReport("Table Users cleared");
+        } catch (PersistenceException e) {
+            System.out.println(" --- " + e + " --- ");
+            ReportCollector.toReport(e.toString());
+        }
     }
 }

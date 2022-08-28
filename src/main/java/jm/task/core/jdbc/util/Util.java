@@ -9,7 +9,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class Util {
+public class Util implements AutoCloseable{
     // реализуйте настройку соединения с БД
     private static Connection connection;
     private static SessionFactory sessionFactory;
@@ -47,5 +47,13 @@ public class Util {
 
     public static void closeConnection() throws SQLException {
         connection.close();
+    }
+
+    @Override
+    public void close() throws SQLException {
+        if (session != null) {
+            session.close();
+            sessionFactory.close();
+        }
     }
 }
