@@ -17,7 +17,9 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void createUsersTable() {
-        try (Session session = Util.getSession()) {
+        Session session = Util.getSession();
+        System.out.println(session.getTransaction());
+        try {
             session.beginTransaction();
             int r = Integer.parseInt(session.createSQLQuery("SELECT COUNT(*) FROM information_schema.TABLES WHERE" +
                     "  TABLE_NAME =\"USERS\"").getSingleResult().toString());
@@ -29,12 +31,13 @@ public class UserDaoHibernateImpl implements UserDao {
                                 "name varchar(255), " +
                                 "primary key (id))")
                         .executeUpdate();
-                //здесь же нет смысла делать .commit()? или я что-то не понимаю?
+                session.getTransaction().commit();
                 ReportCollector.toReport("Table created");
             } else {
                 ReportCollector.toReport("Table already exists");
             }
         } catch (PersistenceException e) {
+            session.getTransaction().rollback();
             System.out.println(" --- " + e + " --- ");
             ReportCollector.toReport(e.toString());
         }
@@ -42,11 +45,14 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void dropUsersTable() {
-        try (Session session = Util.getSession()) {
+        Session session = Util.getSession();
+        try {
             session.beginTransaction();
             session.createSQLQuery("drop table if exists Users").executeUpdate();
             ReportCollector.toReport("Table Users dropped");
+            session.getTransaction().commit();
         } catch (PersistenceException e) {
+            session.getTransaction().rollback();
             System.out.println(" --- " + e + " --- ");
             ReportCollector.toReport(e.toString());
         }
