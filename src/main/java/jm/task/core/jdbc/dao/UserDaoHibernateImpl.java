@@ -17,9 +17,7 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void createUsersTable() {
-        Session session = Util.getSession();
-        System.out.println(session.getTransaction());
-        try {
+        try (Session session = Util.getSession()){
             session.beginTransaction();
             int r = Integer.parseInt(session.createSQLQuery("SELECT COUNT(*) FROM information_schema.TABLES WHERE" +
                     "  TABLE_NAME =\"USERS\"").getSingleResult().toString());
@@ -37,7 +35,7 @@ public class UserDaoHibernateImpl implements UserDao {
                 ReportCollector.toReport("Table already exists");
             }
         } catch (PersistenceException e) {
-            session.getTransaction().rollback();
+            Util.getSession().getTransaction().rollback();
             System.out.println(" --- " + e + " --- ");
             ReportCollector.toReport(e.toString());
         }
@@ -45,14 +43,13 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void dropUsersTable() {
-        Session session = Util.getSession();
-        try {
+        try (Session session = Util.getSession()){
             session.beginTransaction();
             session.createSQLQuery("drop table if exists Users").executeUpdate();
             ReportCollector.toReport("Table Users dropped");
             session.getTransaction().commit();
         } catch (PersistenceException e) {
-            session.getTransaction().rollback();
+            Util.getSession().getTransaction().rollback();
             System.out.println(" --- " + e + " --- ");
             ReportCollector.toReport(e.toString());
         }
@@ -60,8 +57,7 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Session session = Util.getSession();
-        try {
+        try (Session session = Util.getSession()){
             User user = new User(name, lastName, age);
             session.beginTransaction();
             session.save(user);
@@ -69,7 +65,7 @@ public class UserDaoHibernateImpl implements UserDao {
             System.out.println("Пользователь " + name + " добавлен в таблицу");
             ReportCollector.toReport("Пользователь " + name + " добавлен в таблицу");
         } catch (PersistenceException e) {
-            session.getTransaction().rollback();
+            Util.getSession().getTransaction().rollback();
             System.out.println(" --- " + e + " --- ");
             ReportCollector.toReport(e.toString());
         }
@@ -77,8 +73,7 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void removeUserById(long id) {
-        Session session = Util.getSession();
-        try {
+        try (Session session = Util.getSession()){
             session.beginTransaction();
             User user = session.get(User.class, id);
             if (user != null) {
@@ -89,7 +84,7 @@ public class UserDaoHibernateImpl implements UserDao {
             }
             session.getTransaction().commit();
         } catch (PersistenceException e) {
-            session.getTransaction().rollback();
+            Util.getSession().getTransaction().rollback();
             System.out.println(" --- " + e + " --- ");
             ReportCollector.toReport(e.toString());
         }
@@ -97,14 +92,13 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public List<User> getAllUsers() {
-        Session session = Util.getSession();
-        try {
+        try (Session session = Util.getSession()){
             session.beginTransaction();
             List<User> userList = session.createQuery("From User").list();
             session.getTransaction().commit();
             return userList;
         } catch (PersistenceException e) {
-            session.getTransaction().rollback();
+            Util.getSession().getTransaction().rollback();
             System.out.println(" --- " + e + " --- ");
             ReportCollector.toReport(e.toString());
             return null;

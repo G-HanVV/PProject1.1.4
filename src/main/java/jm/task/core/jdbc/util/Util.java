@@ -25,7 +25,8 @@ public class Util implements AutoCloseable{
         }
         return session;
     }
-    public static void closeSession(){
+    @Override
+    public void close(){
         if (session != null) {
             session.close();
             sessionFactory.close();
@@ -34,26 +35,11 @@ public class Util implements AutoCloseable{
 
     public static Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-//            System.out.println("\tUtil. Start opening connection");
             String url = "jdbc:mysql://localhost/PP_1_1_3-4_JDBC_Hibernate";
             String user = "root";
             String pass = "root";
             connection = DriverManager.getConnection(url, user, pass);
-        } else {
-//            System.out.println("\tUtil. Connection is opened");
         }
         return connection;
-    }
-
-    public static void closeConnection() throws SQLException {
-        connection.close();
-    }
-
-    @Override
-    public void close() throws SQLException {
-        if (session != null) {
-            session.close();
-            sessionFactory.close();
-        }
     }
 }
